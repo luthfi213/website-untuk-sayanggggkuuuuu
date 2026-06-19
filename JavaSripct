@@ -1,0 +1,433 @@
+// ==================== CONFIGURATION & VARIABLES ====================
+const anniversaryDate = new Date("2026-06-06T00:00:00");
+const ytVideoId = "h2tNgvgFa4M"; // Kaleb J - Kebutuhan Hati
+
+let ytPlayer = null;
+let isMusicPlaying = false;
+let currentSlide = 0;
+let isLetterTyped = false;
+
+// ==================== YOUTUBE PLAYER API ====================
+// Load YouTube IFrame Player API
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// This function will be called when API is ready
+window.onYouTubeIframeAPIReady = function() {
+    ytPlayer = new YT.Player('youtubePlayer', {
+        height: '1',
+        width: '1',
+        videoId: ytVideoId,
+        playerVars: {
+            'playsinline': 1,
+            'controls': 0,
+            'disablekb': 1,
+            'fs': 0,
+            'rel': 0,
+            'modestbranding': 1,
+            'loop': 1,
+            'playlist': ytVideoId
+        },
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+        }
+    });
+};
+
+function onPlayerReady(event) {
+    // Player ready, wait for user interaction to play
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+        isMusicPlaying = true;
+        document.getElementById('musicToggle').classList.add('playing');
+    } else {
+        isMusicPlaying = false;
+        document.getElementById('musicToggle').classList.remove('playing');
+    }
+}
+
+function playMusic() {
+    if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
+        ytPlayer.playVideo();
+        ytPlayer.setVolume(100);
+        isMusicPlaying = true;
+        document.getElementById('musicToggle').classList.add('playing');
+    }
+}
+
+function pauseMusic() {
+    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+        ytPlayer.pauseVideo();
+        isMusicPlaying = false;
+        document.getElementById('musicToggle').classList.remove('playing');
+    }
+}
+
+function toggleMusic() {
+    if (isMusicPlaying) {
+        pauseMusic();
+    } else {
+        playMusic();
+    }
+}
+
+// ==================== FLOATING HEARTS ====================
+function createHeart() {
+    const container = document.getElementById('floatingHearts');
+    if (!container) return;
+
+    const heart = document.createElement('div');
+    heart.classList.add('heart-particle');
+    
+    // Random heart icon
+    const hearts = ['❤️', '💖', '💗', '💕', '🌸', '🌹'];
+    heart.innerText = hearts[Math.floor(Math.random() * hearts.length)];
+    
+    // Random position and timing
+    const startLeft = Math.random() * 100;
+    const size = 15 + Math.random() * 20;
+    const duration = 8 + Math.random() * 8;
+    const delay = Math.random() * 5;
+
+    heart.style.left = `${startLeft}%`;
+    heart.style.fontSize = `${size}px`;
+    heart.style.animationDuration = `${duration}s`;
+    heart.style.animationDelay = `${delay}s`;
+    
+    container.appendChild(heart);
+
+    // Remove after animation completes
+    setTimeout(() => {
+        heart.remove();
+    }, (duration + delay) * 1000);
+}
+
+// Start creating hearts
+function startFloatingHearts() {
+    setInterval(createHeart, 500);
+}
+
+// ==================== COUNTDOWN TIMER ====================
+function updateCountdown() {
+    const now = new Date();
+    const difference = now - anniversaryDate;
+
+    if (difference < 0) {
+        // Fallback if anniversary date is in the future
+        document.getElementById('countDays').innerText = "0";
+        document.getElementById('countHours').innerText = "0";
+        document.getElementById('countMinutes').innerText = "0";
+        document.getElementById('countSeconds').innerText = "0";
+        return;
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+    document.getElementById('countDays').innerText = days;
+    document.getElementById('countHours').innerText = hours;
+    document.getElementById('countMinutes').innerText = minutes;
+    document.getElementById('countSeconds').innerText = seconds;
+}
+
+// ==================== TYPEWRITER ANIMATION ====================
+function typeLetter() {
+    if (isLetterTyped) return;
+    isLetterTyped = true;
+
+    const letterBody = document.getElementById('letterBody');
+    const paragraphs = letterBody.querySelectorAll('p');
+    
+    // Hide all paragraphs initially
+    paragraphs.forEach(p => {
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(15px)';
+    });
+
+    let currentParagraphIndex = 0;
+
+    function typeNextParagraph() {
+        if (currentParagraphIndex >= paragraphs.length) return;
+
+        const p = paragraphs[currentParagraphIndex];
+        const text = p.innerHTML;
+        p.innerHTML = '';
+        p.style.opacity = '1';
+        p.style.transform = 'translateY(0)';
+        p.classList.add('typing');
+
+        let charIndex = 0;
+        let isTag = false;
+        let tempText = '';
+
+        function typeChar() {
+            if (charIndex >= text.length) {
+                p.innerHTML = text; // Restore original HTML to ensure any tags work
+                p.classList.remove('typing');
+                p.classList.add('typing-done');
+                currentParagraphIndex++;
+                setTimeout(typeNextParagraph, 600); // Wait before next paragraph
+                return;
+            }
+
+            const char = text[charIndex];
+            
+            // Handle HTML tags like 🤍 if any
+            if (char === '<') isTag = true;
+            if (char === '>') {
+                isTag = false;
+                tempText += char;
+                charIndex++;
+                p.innerHTML = tempText;
+                setTimeout(typeChar, 30);
+                return;
+            }
+
+            if (isTag) {
+                tempText += char;
+                charIndex++;
+                typeChar();
+            } else {
+                tempText += char;
+                p.innerHTML = tempText;
+                charIndex++;
+                setTimeout(typeChar, 35);
+            }
+        }
+
+        typeChar();
+    }
+
+    typeNextParagraph();
+}
+
+// ==================== PHOTO GALLERY CAROUSEL ====================
+function initGallery() {
+    const track = document.getElementById('galleryTrack');
+    const slides = Array.from(track.children);
+    const nextButton = document.getElementById('nextBtn');
+    const prevButton = document.getElementById('prevBtn');
+    const dotsContainer = document.getElementById('galleryDots');
+
+    // Create dot indicators
+    slides.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (index === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => moveToSlide(index));
+        dotsContainer.appendChild(dot);
+    });
+
+    const dots = Array.from(dotsContainer.children);
+
+    function updateSlidePosition() {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        
+        // Update slides active state
+        slides.forEach((slide, index) => {
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            } else {
+                slide.classList.remove('active');
+            }
+        });
+
+        // Update dots active state
+        dots.forEach((dot, index) => {
+            if (index === currentSlide) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+    }
+
+    function moveToSlide(index) {
+        currentSlide = index;
+        updateSlidePosition();
+    }
+
+    nextButton.addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) {
+            currentSlide++;
+        } else {
+            currentSlide = 0; // Wrap around
+        }
+        updateSlidePosition();
+    });
+
+    prevButton.addEventListener('click', () => {
+        if (currentSlide > 0) {
+            currentSlide--;
+        } else {
+            currentSlide = slides.length - 1; // Wrap around
+        }
+        updateSlidePosition();
+    });
+
+    // Auto play carousel every 5 seconds
+    setInterval(() => {
+        if (currentSlide < slides.length - 1) {
+            currentSlide++;
+        } else {
+            currentSlide = 0;
+        }
+        updateSlidePosition();
+    }, 5000);
+}
+
+// ==================== REVEAL ON SCROLL ====================
+function initScrollReveal() {
+    const reveals = document.querySelectorAll('.reveal');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                
+                // Trigger typewriter when letter section is visible
+                if (entry.target.id === 'letterSection' || entry.target.contains(document.getElementById('letterBody'))) {
+                    typeLetter();
+                }
+
+                // Trigger confetti when closing section is visible
+                if (entry.target.id === 'closingSection' || entry.target.classList.contains('closing-content')) {
+                    startConfetti();
+                }
+            }
+        });
+    }, {
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px"
+    });
+
+    reveals.forEach(reveal => {
+        observer.observe(reveal);
+    });
+}
+
+// ==================== CONFETTI EFFECT ====================
+let confettiInterval = null;
+function startConfetti() {
+    if (confettiInterval) return; // Already running
+
+    const container = document.getElementById('confettiContainer');
+    if (!container) return;
+
+    function createConfettiPiece() {
+        const piece = document.createElement('div');
+        piece.classList.add('confetti-piece');
+
+        const colors = ['#ff7597', '#ffd6e0', '#ffc2d1', '#f3a0b3', '#ffffff', '#fd8aa3'];
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+        // Random shapes
+        const shapes = ['50%', '0%']; // 50% is circle, 0% is square/rect
+        piece.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
+
+        const startLeft = Math.random() * 100;
+        const width = 8 + Math.random() * 8;
+        const height = 8 + Math.random() * 8;
+        const duration = 3 + Math.random() * 3;
+
+        piece.style.left = `${startLeft}%`;
+        piece.style.width = `${width}px`;
+        piece.style.height = `${height}px`;
+        piece.style.animationDuration = `${duration}s`;
+
+        container.appendChild(piece);
+
+        setTimeout(() => {
+            piece.remove();
+        }, duration * 1000);
+    }
+
+    // Spawn initial bunch
+    for (let i = 0; i < 40; i++) {
+        setTimeout(createConfettiPiece, Math.random() * 2000);
+    }
+
+    // Keep spawning
+    confettiInterval = setInterval(createConfettiPiece, 150);
+}
+
+// ==================== SCROLL TO TOP BTN ====================
+function initScrollTopBtn() {
+    const btn = document.getElementById('scrollTopBtn');
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+// ==================== EVENT LISTENERS ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Start background animations
+    startFloatingHearts();
+    
+    // Initialize countdown
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Initialize photo gallery
+    initGallery();
+
+    // Initialize scroll animation
+    initScrollReveal();
+
+    // Initialize Scroll to Top button
+    initScrollTopBtn();
+
+    // Opening Envelope Interactions
+    const envelope = document.getElementById('envelope');
+    const openLetterBtn = document.getElementById('openLetterBtn');
+    const openingScreen = document.getElementById('openingScreen');
+    const mainContent = document.getElementById('mainContent');
+    const musicToggle = document.getElementById('musicToggle');
+
+    envelope.addEventListener('click', () => {
+        envelope.classList.add('open');
+    });
+
+    openLetterBtn.addEventListener('click', () => {
+        envelope.classList.add('open');
+        
+        // Slide up opening screen and show content
+        setTimeout(() => {
+            openingScreen.classList.add('slide-up');
+            mainContent.classList.add('visible');
+            
+            // Start background music
+            playMusic();
+            
+            // Check if letter section is immediately visible (sometimes is on refresh)
+            setTimeout(() => {
+                const rect = document.getElementById('letterSection').getBoundingClientRect();
+                if (rect.top < window.innerHeight) {
+                    typeLetter();
+                }
+            }, 800);
+        }, 600);
+    });
+
+    // Music toggle click handler
+    musicToggle.addEventListener('click', toggleMusic);
+});
